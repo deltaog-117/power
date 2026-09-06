@@ -32,6 +32,7 @@ PowerStatus power_service_execute(const char *cmd) {
 
     if (command == CMD_UNKNOWN) {
         LOG_ERROR("Unknown command: %s", cmd);
+        LOG_ERROR("Suggestion: Use 'help' to see available commands.");
         return POWER_STATUS_ERR_INVALID_COMMAND;
     }
 

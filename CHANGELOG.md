@@ -8,7 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- (None yet – this is the current stable version)
+- **User configuration file** – `~/.config/power.conf` to customise:
+  - Locker priority order (`locker_order`)
+  - Logout priority order (`logout_order`)
+  - Default command (`default`)
+- `src/power/model/config.h` and `config.c` for config parsing
+- Sample config file at `config/power.conf.example`
+
+### Changed
+- `system_lock()` and `system_logout()` now use config-specified order when available
+- `main.c` loads config on startup and uses default command if set
 
 ---
 

@@ -26,6 +26,9 @@ Whether you're a minimalist running `dwm`, a GNOME user, or a system administrat
 - 🔹 **Structured logging** – Timestamped logs with levels (DEBUG, INFO, WARN, ERROR, CRITICAL)
 - 🔹 **Modular architecture** – Feature‑first, vertically sliced design for easy maintenance
 - 🔹 **Small & fast** – Written in C99, minimal dependencies
+- 🔹 **Version flag** – `--version` or `-v` to display build information
+- 🔹 **Systemd/logind integration** – Uses `loginctl` when available, falls back gracefully
+- 🔹 **User configuration** – Customise locker/logout order and default command via `~/.config/power.conf`
 
 ---
 
@@ -75,6 +78,8 @@ power reboot    # Reboot the system
 power lock      # Lock the screen
 power logout    # Log out of the current session
 power help      # Show usage
+power --version # Show version information
+power -v        # Show version information (short)
 ```
 
 ### Shortcuts
@@ -115,6 +120,29 @@ Example:
 POWER_LOG_LEVEL=DEBUG power lock
 ```
 
+### Configuration File
+
+`power` supports a user configuration file at `~/.config/power.conf`. This allows you to:
+
+- **Set a default command** – if no command is provided, `power` uses this.
+- **Customise locker priority order** – change which lockers are tried first.
+- **Customise logout priority order** – change which logout methods are tried first.
+
+#### Example `~/.config/power.conf`
+
+```ini
+# Default command when none is provided
+default = lock
+
+# Custom locker order (comma-separated)
+locker_order = i3lock, gnome-screensaver-command -l, xlock, loginctl lock-session
+
+# Custom logout order (comma-separated)
+logout_order = i3-msg exit, bspc quit, gnome-session-quit --logout --no-prompt
+```
+
+If a config file is not found, `power` uses its built‑in defaults.
+
 ---
 
 ## 📁 Project Structure
@@ -122,11 +150,14 @@ POWER_LOG_LEVEL=DEBUG power lock
 ```
 src/
 ├── power/                    # Core feature (vertical slice)
-│   ├── model/                # Data models (enums, status codes)
+│   ├── model/                # Data models (enums, status codes, config)
 │   │   ├── command.h         # Command enum and parser
 │   │   ├── command.c
+│   │   ├── config.h          # Configuration loading
+│   │   ├── config.c
 │   │   ├── status.h          # PowerStatus enum and string conversion
-│   │   └── status.c
+│   │   ├── status.c
+│   │   └── version.h         # Version and build date
 │   ├── repository/           # Low‑level system calls
 │   │   ├── system_repo.h     # suspend, poweroff, reboot, lock, logout
 │   │   └── system_repo.c
@@ -139,7 +170,7 @@ src/
 │   │   └── logger.c
 │   └── utils/                # Generic utilities (placeholder)
 │       └── string_utils.c
-├── main.c                    # Thin entrypoint (arg parsing, log setup)
+├── main.c                    # Thin entrypoint (arg parsing, log setup, config)
 tests/
 ├── unit/                     # Unit tests (mirror src/)
 │   └── power/
@@ -191,7 +222,7 @@ This project is licensed under the [GNU Affero General Public License v3.0](LICE
 
 ## 💬 Questions / Support
 
-Open an [issue](https://github.com/[username]/power/issues) or reach out via email.
+Open an [issue](https://github.com/deltaog-117/power/issues) or reach out via email.
 
 ---
 

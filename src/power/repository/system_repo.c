@@ -1,5 +1,6 @@
 #include "system_repo.h"
 #include "../model/status.h"
+#include "../model/config.h"
 #include "../../shared/logging/logger.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,19 +11,61 @@
 
 #define SYS_POWER_STATE "/sys/power/state"
 
-PowerStatus system_suspend(void) {
-    LOG_INFO("Suspending system...");
+/* Global config (set by main) */
+static PowerConfig *g_config = NULL;
 
+void system_repo_set_config(PowerConfig *config) {
+    g_config = config;
+}
+
+static int logind_available_cached = -1;
+
+static int logind_available(void) {
+    if (logind_available_cached != -1) {
+        return logind_available_cached;
+    }
+    int ret = system("loginctl --version >/dev/null 2>&1");
+    logind_available_cached = (ret == 0);
+    return logind_available_cached;
+}
+
+static PowerStatus try_logind_action(const char *action) {
+    if (!logind_available()) {
+        return POWER_STATUS_ERR_SYSTEM;
+    }
+
+    char cmd[256];
+    snprintf(cmd, sizeof(cmd), "loginctl %s", action);
+    LOG_DEBUG("Trying logind: %s", cmd);
+
+    int ret = system(cmd);
+    if (ret == 0) {
+        LOG_INFO("loginctl %s succeeded", action);
+        return POWER_STATUS_OK;
+    } else {
+        LOG_WARN("loginctl %s failed (ret=%d), falling back", action, ret);
+        return POWER_STATUS_ERR_SYSTEM;
+    }
+}
+
+PowerStatus system_suspend(void) {
+    if (try_logind_action("suspend") == POWER_STATUS_OK) {
+        return POWER_STATUS_OK;
+    }
+
+    LOG_INFO("Falling back to /sys/power/state for suspend");
     sync();
 
     FILE *fp = fopen(SYS_POWER_STATE, "w");
     if (!fp) {
         LOG_ERROR("Failed to open %s: %s", SYS_POWER_STATE, strerror(errno));
+        LOG_ERROR("Suggestion: Run with sudo or ensure write access to /sys/power/state.");
         return POWER_STATUS_ERR_IO;
     }
 
     if (fprintf(fp, "mem") < 0) {
         LOG_ERROR("Failed to write to %s: %s", SYS_POWER_STATE, strerror(errno));
+        LOG_ERROR("Suggestion: Check kernel support for suspend; try 'cat /sys/power/state' to see available states.");
         fclose(fp);
         return POWER_STATUS_ERR_IO;
     }
@@ -32,23 +75,34 @@ PowerStatus system_suspend(void) {
 }
 
 PowerStatus system_poweroff(void) {
-    LOG_INFO("Powering off system...");
+    if (try_logind_action("poweroff") == POWER_STATUS_OK) {
+        return POWER_STATUS_OK;
+    }
+
+    LOG_INFO("Falling back to reboot(RB_POWER_OFF)");
     sync();
     reboot(RB_POWER_OFF);
     LOG_ERROR("reboot(RB_POWER_OFF) failed: %s", strerror(errno));
+    LOG_ERROR("Suggestion: Try using 'shutdown -h now' or 'systemctl poweroff' directly.");
     return POWER_STATUS_ERR_SYSTEM;
 }
 
 PowerStatus system_reboot(void) {
-    LOG_INFO("Rebooting system...");
+    if (try_logind_action("reboot") == POWER_STATUS_OK) {
+        return POWER_STATUS_OK;
+    }
+
+    LOG_INFO("Falling back to reboot(RB_AUTOBOOT)");
     sync();
     reboot(RB_AUTOBOOT);
     LOG_ERROR("reboot(RB_AUTOBOOT) failed: %s", strerror(errno));
+    LOG_ERROR("Suggestion: Try using 'shutdown -r now' or 'systemctl reboot' directly.");
     return POWER_STATUS_ERR_SYSTEM;
 }
 
 PowerStatus system_lock(void) {
-    const char *lock_cmds[] = {
+    /* Default locker order */
+    const char *default_lockers[] = {
         "i3lock",
         "gnome-screensaver-command -l",
         "kscreenlocker --lock",
@@ -57,21 +111,37 @@ PowerStatus system_lock(void) {
         NULL
     };
 
-    for (int i = 0; lock_cmds[i] != NULL; i++) {
-        LOG_DEBUG("Trying locker: %s", lock_cmds[i]);
-        int ret = system(lock_cmds[i]);
+    /* Use config if available and non-empty */
+    const char **lockers = NULL;
+    int count = 0;
+
+    if (g_config && g_config->locker_count > 0) {
+        lockers = (const char **)g_config->locker_order;
+        count = g_config->locker_count;
+        LOG_DEBUG("Using config-specified locker order (%d entries)", count);
+    } else {
+        lockers = default_lockers;
+        while (default_lockers[count] != NULL) count++;
+        LOG_DEBUG("Using default locker order (%d entries)", count);
+    }
+
+    for (int i = 0; i < count; i++) {
+        LOG_DEBUG("Trying locker: %s", lockers[i]);
+        int ret = system(lockers[i]);
         if (ret == 0) {
             LOG_INFO("Screen locked successfully");
             return POWER_STATUS_OK;
         }
     }
 
-    LOG_ERROR("No screen locker found");
+    LOG_ERROR("No screen locker found.");
+    LOG_ERROR("Suggestion: Install i3lock, gnome-screensaver, kscreensaver, xlock, or ensure logind is available.");
     return POWER_STATUS_ERR_NO_LOCKER;
 }
 
 PowerStatus system_logout(void) {
-    const char *logout_cmds[] = {
+    /* Default logout order */
+    const char *default_logout[] = {
         "i3-msg exit",
         "bspc quit",
         "herbstclient quit",
@@ -92,15 +162,31 @@ PowerStatus system_logout(void) {
         NULL
     };
 
-    for (int i = 0; logout_cmds[i] != NULL; i++) {
-        LOG_DEBUG("Trying logout method: %s", logout_cmds[i]);
-        int ret = system(logout_cmds[i]);
+    /* Use config if available and non-empty */
+    const char **logout_methods = NULL;
+    int count = 0;
+
+    if (g_config && g_config->logout_count > 0) {
+        logout_methods = (const char **)g_config->logout_order;
+        count = g_config->logout_count;
+        LOG_DEBUG("Using config-specified logout order (%d entries)", count);
+    } else {
+        logout_methods = default_logout;
+        while (default_logout[count] != NULL) count++;
+        LOG_DEBUG("Using default logout order (%d entries)", count);
+    }
+
+    for (int i = 0; i < count; i++) {
+        LOG_DEBUG("Trying logout method: %s", logout_methods[i]);
+        int ret = system(logout_methods[i]);
         if (ret == 0) {
             LOG_INFO("Logged out successfully");
             return POWER_STATUS_OK;
         }
     }
 
-    LOG_ERROR("No logout method found");
+    LOG_ERROR("No logout method found.");
+    LOG_ERROR("Suggestion: Ensure a supported window manager or desktop environment is running.");
+    LOG_ERROR("For minimal setups, manually use 'pkill -KILL -u $USER' (force logout).");
     return POWER_STATUS_ERR_NO_LOGOUT_METHOD;
 }

@@ -1,5 +1,8 @@
 #include "power/service/power_service.h"
 #include "power/model/status.h"
+#include "power/model/version.h"
+#include "power/model/config.h"
+#include "power/repository/system_repo.h"
 #include "shared/logging/logger.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +22,12 @@ static void print_usage(const char *progname) {
     printf("  off, shutdown, sd - Same as poweroff\n");
     printf("  restart, rb  - Same as reboot\n");
     printf("  out, exit, log - Same as logout\n");
+    printf("\nOptions:\n");
+    printf("  --version, -v  - Show version information\n");
+}
+
+static void print_version(void) {
+    printf("%s\n", POWER_VERSION_STRING);
 }
 
 int main(int argc, char *argv[]) {
@@ -37,18 +46,38 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    /* Load configuration */
+    PowerConfig config = {0};
+    if (config_load(&config) == 0) {
+        system_repo_set_config(&config);
+    }
+
     const char *cmd = NULL;
     if (argc > 1) {
         cmd = argv[1];
     } else {
-        print_usage(argv[0]);
+        /* Use default command from config if set */
+        if (config.default_cmd) {
+            LOG_DEBUG("No command provided; using default: %s", config.default_cmd);
+            cmd = config.default_cmd;
+        } else {
+            print_usage(argv[0]);
+            config_free(&config);
+            return 0;
+        }
+    }
+
+    if (strcmp(cmd, "--version") == 0 || strcmp(cmd, "-v") == 0) {
+        print_version();
+        config_free(&config);
         return 0;
     }
 
     PowerStatus status = power_service_execute(cmd);
 
+    config_free(&config);
+
     if (status != POWER_STATUS_OK) {
-        LOG_ERROR("Command failed: %s", power_status_to_string(status));
         return 1;
     }
 

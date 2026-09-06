@@ -17,28 +17,25 @@ Items are organized by priority, not by timeline.
 - ✅ Manual sync before suspend/poweroff/reboot
 - ✅ Skeleton project scaffold (feature-first, modular structure)
 - ✅ Core philosophy documented in VISION.md
+- ✅ Modular refactor of `power.c` into model/service/repository layers
+- ✅ Structured logging with levels and timestamp
+- ✅ Unified `PowerStatus` error enum
+- ✅ Robust Makefile with install/uninstall/test targets
+- ✅ `--version` / `-v` flag
+- ✅ **Systemd/logind integration** – use `loginctl` as primary method for suspend, poweroff, reboot, and lock
+- ✅ **Improved error messages** – user‑friendly suggestions for common failures
+- ✅ **User configuration file** – `~/.config/power.conf` for custom locker/logout order and default command
 
 ---
 
 ## 🔥 High Priority (Critical)
 
-- **Refactor monolithic `power.c` into modular scaffold** – Split logic into `model/` (command definitions), `service/` (orchestration), and `repository/` (low-level OS calls). This is the foundation for all future improvements.
-- **Implement structured logging** – Replace raw `printf`/`perror` with a proper logging module in `shared/logging/` (support log levels: ERROR, WARN, INFO, DEBUG) so users can trace what `power` attempted.
-- **Define proper error types** – Create a unified `PowerStatus` enum (instead of returning raw `int`) with descriptive error codes and messages, integrated with the logging system.
-- **Create a robust Makefile** – Provide targets: `all`, `clean`, `install` (to `/usr/local/bin`), `uninstall`, and `test` (to run the unit tests).
 - **Add basic unit tests** – At minimum, test the fallback ordering logic for lockers and logout methods without actually executing system commands (use mocks / stubs).
 
 ---
 
 ## 🟡 Medium Priority (Important)
 
-- **User configuration file** – Support `~/.config/power.conf` (or `~/.powerrc`) to allow users to:
-  - Customise the priority order of screen lockers.
-  - Customise the priority order of logout methods.
-  - Set default operation (e.g., `default=lock` if no argument is given).
-- **`--version` flag** – Display the current version and build date.
-- **Improved error messages** – Move beyond simple `perror()` and provide context‑aware suggestions (e.g., `power: lock: no screen locker found. Try installing i3lock or gnome-screensaver.`).
-- **Systemd/logind integration as primary** – If `logind` is available, use it for suspend/poweroff/reboot/lock instead of falling back to raw syscalls. This improves compatibility with modern distros.
 - **Man page** – Write a proper `power.1` man page and include it in the install target.
 
 ---

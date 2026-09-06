@@ -1,0 +1,11 @@
+# power configuration file
+# Place this file at ~/.config/power.conf
+
+# Default command if none provided
+# default = lock
+
+# Customise locker priority order (comma-separated)
+# locker_order = i3lock, gnome-screensaver-command -l, xlock, loginctl lock-session
+
+# Customise logout priority order (comma-separated)
+# logout_order = i3-msg exit, bspc quit, gnome-session-quit --logout --no-prompt

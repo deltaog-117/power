@@ -74,6 +74,7 @@ int config_load(PowerConfig *config) {
     config->logout_count = 0;
     config->default_cmd = NULL;
     config->lock_before_suspend = -1;
+    config->lock_before_hibernate = -1;
 
     while (fgets(line, sizeof(line), fp)) {
         line_num++;
@@ -107,6 +108,12 @@ int config_load(PowerConfig *config) {
                 LOG_DEBUG("Config: lock_before_suspend = %s", config->lock_before_suspend ? "true" : "false");
             } else {
                 LOG_WARN("Config line %d: invalid boolean for lock_before_suspend: '%s'", line_num, value);
+            }
+        } else if (strcmp(key, "lock_before_hibernate") == 0) {
+            if (parse_bool(value, &config->lock_before_hibernate) == 0) {
+                LOG_DEBUG("Config: lock_before_hibernate = %s", config->lock_before_hibernate ? "true" : "false");
+            } else {
+                LOG_WARN("Config line %d: invalid boolean for lock_before_hibernate: '%s'", line_num, value);
             }
         } else {
             LOG_WARN("Config line %d: unknown key '%s'", line_num, key);

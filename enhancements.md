@@ -75,6 +75,7 @@
 | Command | Shortcuts | Description | Requires Sudo? |
 |---------|-----------|-------------|----------------|
 | `suspend` | `sleep`, `sp` | Suspend to RAM (sleep) | ✅ Yes |
+| `hibernate` | `hb` | Suspend to disk (hibernate) | ✅ Yes |
 | `poweroff` | `off`, `shutdown` | Power off the system | ✅ Yes |
 | `reboot` | `restart`, `rb` | Reboot the system | ✅ Yes |
 | `lock` | (none) | Lock the screen | ❌ No |

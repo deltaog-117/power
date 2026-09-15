@@ -28,6 +28,18 @@ void system_repo_set_config(PowerConfig *config);
 PowerStatus system_suspend(void);
 
 /**
+ * @brief Suspend the system to disk (hibernate).
+ *
+ * Locks the screen first (unless disabled via `lock_before_hibernate = false`
+ * in the config); if locking fails, hibernate is refused. Then tries logind,
+ * falling back to writing "disk" to /sys/power/state.
+ *
+ * @return POWER_STATUS_OK on success, or an error code on failure
+ *         (including a failed screen lock).
+ */
+PowerStatus system_hibernate(void);
+
+/**
  * @brief Power off the system.
  *
  * Tries logind first, then calls reboot(RB_POWER_OFF).

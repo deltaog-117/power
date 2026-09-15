@@ -12,6 +12,8 @@ static const CommandEntry command_map[] = {
     {"suspend",   CMD_SUSPEND},
     {"sleep",     CMD_SUSPEND},
     {"sp",        CMD_SUSPEND},
+    {"hibernate", CMD_HIBERNATE},
+    {"hb",        CMD_HIBERNATE},
     {"poweroff",  CMD_POWEROFF},
     {"off",       CMD_POWEROFF},
     {"shutdown",  CMD_POWEROFF},
@@ -47,6 +49,7 @@ Command parse_command(const char *str) {
 const char *command_name(Command cmd) {
     switch (cmd) {
         case CMD_SUSPEND:   return "suspend";
+        case CMD_HIBERNATE: return "hibernate";
         case CMD_POWEROFF:  return "poweroff";
         case CMD_REBOOT:    return "reboot";
         case CMD_LOCK:      return "lock";

@@ -12,6 +12,7 @@ extern "C" {
  */
 typedef enum {
     CMD_SUSPEND,   /**< Suspend to RAM (sleep) */
+    CMD_HIBERNATE, /**< Suspend to disk (hibernate) */
     CMD_POWEROFF,  /**< Power off the system */
     CMD_REBOOT,    /**< Reboot the system */
     CMD_LOCK,      /**< Lock the screen */

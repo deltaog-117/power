@@ -9,8 +9,8 @@ Items are organized by priority, not by timeline.
 
 ## ✅ Completed (Milestones Achieved)
 
-- ✅ Basic command set: `suspend`, `poweroff`, `reboot`, `lock`, `logout`
-- ✅ Shortcut aliases (`sp`, `sleep`, `off`, `shutdown`, `sd`, `restart`, `rb`, `out`, `exit`, `log`)
+- ✅ Basic command set: `suspend`, `hibernate`, `poweroff`, `reboot`, `lock`, `logout`
+- ✅ Shortcut aliases (`sp`, `sleep`, `hb`, `off`, `shutdown`, `sd`, `restart`, `rb`, `out`, `exit`, `log`)
 - ✅ Fallback mechanism for screen lockers (i3lock → GNOME → KDE → xlock → loginctl)
 - ✅ Fallback mechanism for logout (multiple WMs/DEs → `pkill -KILL`)
 - ✅ Simple help / usage screen
@@ -26,6 +26,7 @@ Items are organized by priority, not by timeline.
 - ✅ **Improved error messages** – user‑friendly suggestions for common failures
 - ✅ **User configuration file** – `~/.config/power.conf` for custom locker/logout order and default command
 - ✅ **Lock before suspend** – `power suspend` locks the screen first by default (`lock_before_suspend` in config), refusing to suspend if locking fails
+- ✅ **Hibernate support** – `power hibernate` (`hb`) suspends to disk via `loginctl hibernate`, falling back to `/sys/power/state`; locks the screen first by default (`lock_before_hibernate` in config)
 
 ---
 
@@ -43,7 +44,6 @@ Items are organized by priority, not by timeline.
 
 ## 🟢 Low Priority (Nice‑to‑Have)
 
-- **Hibernate support** – Add `hibernate` command (write to `/sys/power/state` with `disk`).
 - **Hybrid‑sleep support** – Add `hybrid-sleep` command (suspend to both RAM and disk).
 - **Desktop notifications** – Use `notify-send` to inform the user when a power action is about to happen or has completed (e.g., "System suspended").
 - **Coloured output** – Use ANSI colours to distinguish success (green), warnings (yellow), and errors (red) in the terminal.

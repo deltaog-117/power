@@ -13,3 +13,7 @@
 # Lock the screen before suspending (default: true).
 # If the lock fails, suspend is refused rather than leaving the session unlocked.
 # lock_before_suspend = true
+
+# Lock the screen before hibernating (default: true). Same behaviour as
+# lock_before_suspend, applied to `power hibernate` / `power hb`.
+# lock_before_hibernate = true

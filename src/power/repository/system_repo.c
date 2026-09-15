@@ -48,28 +48,26 @@ static PowerStatus try_logind_action(const char *action) {
     }
 }
 
-static int should_lock_before_suspend(void) {
-    if (g_config && g_config->lock_before_suspend != -1) {
-        return g_config->lock_before_suspend;
-    }
-    return 1; /* default: lock the screen before suspending */
+static int should_lock(int configured) {
+    return configured != -1 ? configured : 1; /* default: lock the screen first */
 }
 
-PowerStatus system_suspend(void) {
-    if (should_lock_before_suspend()) {
-        PowerStatus lock_status = system_lock();
-        if (lock_status != POWER_STATUS_OK) {
-            LOG_ERROR("Refusing to suspend: screen lock failed (%s)", power_status_to_string(lock_status));
-            LOG_ERROR("Suggestion: install a screen locker, fix locker_order in power.conf, or set lock_before_suspend = false to suspend without locking.");
-            return lock_status;
-        }
-    }
-
-    if (try_logind_action("suspend") == POWER_STATUS_OK) {
+static PowerStatus lock_or_refuse(const char *action, const char *config_key, int should) {
+    if (!should) {
         return POWER_STATUS_OK;
     }
 
-    LOG_INFO("Falling back to /sys/power/state for suspend");
+    PowerStatus lock_status = system_lock();
+    if (lock_status != POWER_STATUS_OK) {
+        LOG_ERROR("Refusing to %s: screen lock failed (%s)", action, power_status_to_string(lock_status));
+        LOG_ERROR("Suggestion: install a screen locker, fix locker_order in power.conf, or set %s = false to %s without locking.",
+                   config_key, action);
+    }
+    return lock_status;
+}
+
+static PowerStatus write_power_state(const char *state, const char *action) {
+    LOG_INFO("Falling back to /sys/power/state for %s", action);
     sync();
 
     FILE *fp = fopen(SYS_POWER_STATE, "w");
@@ -79,15 +77,43 @@ PowerStatus system_suspend(void) {
         return POWER_STATUS_ERR_IO;
     }
 
-    if (fprintf(fp, "mem") < 0) {
+    if (fprintf(fp, "%s", state) < 0) {
         LOG_ERROR("Failed to write to %s: %s", SYS_POWER_STATE, strerror(errno));
-        LOG_ERROR("Suggestion: Check kernel support for suspend; try 'cat /sys/power/state' to see available states.");
+        LOG_ERROR("Suggestion: Check kernel support for %s; try 'cat /sys/power/state' to see available states.", action);
         fclose(fp);
         return POWER_STATUS_ERR_IO;
     }
 
     fclose(fp);
     return POWER_STATUS_OK;
+}
+
+PowerStatus system_suspend(void) {
+    PowerStatus lock_status = lock_or_refuse("suspend", "lock_before_suspend",
+        should_lock(g_config ? g_config->lock_before_suspend : -1));
+    if (lock_status != POWER_STATUS_OK) {
+        return lock_status;
+    }
+
+    if (try_logind_action("suspend") == POWER_STATUS_OK) {
+        return POWER_STATUS_OK;
+    }
+
+    return write_power_state("mem", "suspend");
+}
+
+PowerStatus system_hibernate(void) {
+    PowerStatus lock_status = lock_or_refuse("hibernate", "lock_before_hibernate",
+        should_lock(g_config ? g_config->lock_before_hibernate : -1));
+    if (lock_status != POWER_STATUS_OK) {
+        return lock_status;
+    }
+
+    if (try_logind_action("hibernate") == POWER_STATUS_OK) {
+        return POWER_STATUS_OK;
+    }
+
+    return write_power_state("disk", "hibernate");
 }
 
 PowerStatus system_poweroff(void) {

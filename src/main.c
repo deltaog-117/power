@@ -12,6 +12,7 @@ static void print_usage(const char *progname) {
     printf("Usage: %s [command]\n", progname);
     printf("Commands:\n");
     printf("  suspend   - Suspend to RAM (sleep)\n");
+    printf("  hibernate - Suspend to disk (hibernate)\n");
     printf("  poweroff  - Power off the system\n");
     printf("  reboot    - Reboot the system\n");
     printf("  lock      - Lock the screen\n");
@@ -19,6 +20,7 @@ static void print_usage(const char *progname) {
     printf("  help      - Show this help message\n");
     printf("\nShortcuts:\n");
     printf("  sp, sleep    - Same as suspend\n");
+    printf("  hb           - Same as hibernate\n");
     printf("  off, shutdown, sd - Same as poweroff\n");
     printf("  restart, rb  - Same as reboot\n");
     printf("  out, exit, log - Same as logout\n");

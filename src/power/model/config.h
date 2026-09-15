@@ -17,10 +17,13 @@ typedef struct {
     char *logout_order[CONFIG_MAX_ENTRIES];   /* Ordered list of logout commands */
     int logout_count;
     char *default_cmd;                         /* Default command if none provided */
+    int lock_before_suspend;                    /* -1 = unset (default: on), 0 = off, 1 = on */
 } PowerConfig;
 
 /**
- * @brief Load configuration from ~/.config/power.conf
+ * @brief Load configuration from ~/.config/power.conf.
+ *
+ * Recognised keys: default, locker_order, logout_order, lock_before_suspend.
  *
  * @param config Pointer to PowerConfig struct to populate.
  * @return 0 on success, -1 on error (or file not found).

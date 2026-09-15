@@ -29,6 +29,7 @@ Whether you're a minimalist running `dwm`, a GNOME user, or a system administrat
 - 🔹 **Version flag** – `--version` or `-v` to display build information
 - 🔹 **Systemd/logind integration** – Uses `loginctl` when available, falls back gracefully
 - 🔹 **User configuration** – Customise locker/logout order and default command via `~/.config/power.conf`
+- 🔹 **Lock before suspend** – Screen locks before suspending by default; suspend is refused if locking fails
 
 ---
 
@@ -139,9 +140,27 @@ locker_order = i3lock, gnome-screensaver-command -l, xlock, loginctl lock-sessio
 
 # Custom logout order (comma-separated)
 logout_order = i3-msg exit, bspc quit, gnome-session-quit --logout --no-prompt
+
+# Lock the screen before suspending (default: true)
+lock_before_suspend = true
 ```
 
 If a config file is not found, `power` uses its built‑in defaults.
+
+#### Lock before suspend
+
+By default, `power suspend` (and its aliases `sp`/`sleep`) locks the screen using the
+same locker fallback chain as `power lock` *before* suspending. If no locker succeeds,
+suspend is refused rather than leaving the session unlocked and unattended. This works
+on any distro/WM `power` already supports, with no dependency on systemd sleep hooks.
+
+Set `lock_before_suspend = false` in `power.conf` if you'd rather suspend without
+locking (e.g. on a headless or single-user machine).
+
+For screen locking on suspends triggered *outside* `power` (lid close, idle timeout),
+pair `power` with [`xss-lock`](https://bitbucket.org/raymonad/xss-lock/), which listens
+for the logind/elogind `PrepareForSleep` signal and works the same way on both
+systemd and non-systemd (elogind-based) distros.
 
 ---
 

@@ -12,7 +12,7 @@
 ## 👤 User & Session Management
 - **Switch User** - Return to login screen, keep session running in background
 - **Kill Session** - Force logout (emergency escape when normal logout freezes)
-- **Lock + Suspend** - Lock screen then suspend (security + power saving in one command)
+- ✅ **Lock + Suspend** - Lock screen then suspend (security + power saving in one command) — implemented via `lock_before_suspend` config option
 - **Lock + Logout** - Lock then logout (secure logout)
 
 
@@ -84,9 +84,9 @@
 
 ## 🎯 Priority Features to Add Next
 1. **Status Command** - Show supported states, lockers, swap, uptime
-2. **Lock + Suspend Combo** - One command for security + power saving
+2. ~~**Lock + Suspend Combo** - One command for security + power saving~~ ✅ Done
 3. **Countdown Timer** - Prevent accidental poweroff/suspend
-4. **Config File** - User preferences (`~/.powerrc`)
+4. ~~**Config File** - User preferences (`~/.powerrc`)~~ ✅ Done (`~/.config/power.conf`)
 5. **Hybrid Sleep** - Suspend + hibernate combined for desktop safety
 
 

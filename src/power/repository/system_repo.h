@@ -18,9 +18,12 @@ void system_repo_set_config(PowerConfig *config);
 /**
  * @brief Suspend the system to RAM.
  *
- * Tries logind first, then writes "mem" to /sys/power/state.
+ * Locks the screen first (unless disabled via `lock_before_suspend = false`
+ * in the config); if locking fails, suspend is refused. Then tries logind,
+ * falling back to writing "mem" to /sys/power/state.
  *
- * @return POWER_STATUS_OK on success, or an error code on failure.
+ * @return POWER_STATUS_OK on success, or an error code on failure
+ *         (including a failed screen lock).
  */
 PowerStatus system_suspend(void);
 

@@ -9,3 +9,7 @@
 
 # Customise logout priority order (comma-separated)
 # logout_order = i3-msg exit, bspc quit, gnome-session-quit --logout --no-prompt
+
+# Lock the screen before suspending (default: true).
+# If the lock fails, suspend is refused rather than leaving the session unlocked.
+# lock_before_suspend = true

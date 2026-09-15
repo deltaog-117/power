@@ -14,10 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Default command (`default`)
 - `src/power/model/config.h` and `config.c` for config parsing
 - Sample config file at `config/power.conf.example`
+- **Lock before suspend** – `system_suspend()` now locks the screen (via the same
+  fallback chain as `power lock`) before suspending, and refuses to suspend if the
+  lock fails. Controlled by `lock_before_suspend` in `power.conf` (default: `true`)
 
 ### Changed
 - `system_lock()` and `system_logout()` now use config-specified order when available
 - `main.c` loads config on startup and uses default command if set
+
+### Fixed
+- `config.c` failed to compile (`PATH_MAX` undeclared) due to a missing `<limits.h>` include
 
 ---
 

@@ -5,6 +5,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <strings.h>
+#include <limits.h>
 
 #define CONFIG_PATH ".config/power.conf"
 
@@ -16,6 +18,18 @@ static char *trim_whitespace(char *str) {
     while (end > str && isspace((unsigned char)*end)) end--;
     end[1] = '\0';
     return str;
+}
+
+static int parse_bool(const char *value, int *out) {
+    if (strcasecmp(value, "true") == 0 || strcasecmp(value, "yes") == 0 || strcmp(value, "1") == 0) {
+        *out = 1;
+        return 0;
+    }
+    if (strcasecmp(value, "false") == 0 || strcasecmp(value, "no") == 0 || strcmp(value, "0") == 0) {
+        *out = 0;
+        return 0;
+    }
+    return -1;
 }
 
 static int parse_list(const char *value, char *list[], int max_entries) {
@@ -59,6 +73,7 @@ int config_load(PowerConfig *config) {
     config->locker_count = 0;
     config->logout_count = 0;
     config->default_cmd = NULL;
+    config->lock_before_suspend = -1;
 
     while (fgets(line, sizeof(line), fp)) {
         line_num++;
@@ -87,6 +102,12 @@ int config_load(PowerConfig *config) {
         } else if (strcmp(key, "logout_order") == 0) {
             config->logout_count = parse_list(value, config->logout_order, CONFIG_MAX_ENTRIES);
             LOG_DEBUG("Config: logout_order = %d entries", config->logout_count);
+        } else if (strcmp(key, "lock_before_suspend") == 0) {
+            if (parse_bool(value, &config->lock_before_suspend) == 0) {
+                LOG_DEBUG("Config: lock_before_suspend = %s", config->lock_before_suspend ? "true" : "false");
+            } else {
+                LOG_WARN("Config line %d: invalid boolean for lock_before_suspend: '%s'", line_num, value);
+            }
         } else {
             LOG_WARN("Config line %d: unknown key '%s'", line_num, key);
         }

@@ -25,6 +25,7 @@ Items are organized by priority, not by timeline.
 - ✅ **Systemd/logind integration** – use `loginctl` as primary method for suspend, poweroff, reboot, and lock
 - ✅ **Improved error messages** – user‑friendly suggestions for common failures
 - ✅ **User configuration file** – `~/.config/power.conf` for custom locker/logout order and default command
+- ✅ **Lock before suspend** – `power suspend` locks the screen first by default (`lock_before_suspend` in config), refusing to suspend if locking fails
 
 ---
 

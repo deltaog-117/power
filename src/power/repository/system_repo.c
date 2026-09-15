@@ -48,7 +48,23 @@ static PowerStatus try_logind_action(const char *action) {
     }
 }
 
+static int should_lock_before_suspend(void) {
+    if (g_config && g_config->lock_before_suspend != -1) {
+        return g_config->lock_before_suspend;
+    }
+    return 1; /* default: lock the screen before suspending */
+}
+
 PowerStatus system_suspend(void) {
+    if (should_lock_before_suspend()) {
+        PowerStatus lock_status = system_lock();
+        if (lock_status != POWER_STATUS_OK) {
+            LOG_ERROR("Refusing to suspend: screen lock failed (%s)", power_status_to_string(lock_status));
+            LOG_ERROR("Suggestion: install a screen locker, fix locker_order in power.conf, or set lock_before_suspend = false to suspend without locking.");
+            return lock_status;
+        }
+    }
+
     if (try_logind_action("suspend") == POWER_STATUS_OK) {
         return POWER_STATUS_OK;
     }

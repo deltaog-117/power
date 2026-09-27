@@ -15,6 +15,7 @@ typedef enum {
     POWER_STATUS_ERR_SYSTEM,             /**< System call failed (see errno) */
     POWER_STATUS_ERR_NO_LOCKER,          /**< No screen locker found */
     POWER_STATUS_ERR_NO_LOGOUT_METHOD,   /**< No logout method found */
+    POWER_STATUS_ERR_NO_LAUNCHER,        /**< No menu launcher (dmenu/rofi/etc.) found */
     POWER_STATUS_ERR_PERMISSION_DENIED,  /**< Insufficient privileges */
     POWER_STATUS_ERR_IO,                 /**< I/O error (e.g., /sys/power/state) */
     POWER_STATUS_ERR_UNKNOWN             /**< Catch‑all for unexpected failures */

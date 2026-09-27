@@ -72,6 +72,7 @@ int config_load(PowerConfig *config) {
     int line_num = 0;
     config->locker_count = 0;
     config->logout_count = 0;
+    config->menu_launcher_count = 0;
     config->default_cmd = NULL;
     config->lock_before_suspend = -1;
     config->lock_before_hibernate = -1;
@@ -103,6 +104,9 @@ int config_load(PowerConfig *config) {
         } else if (strcmp(key, "logout_order") == 0) {
             config->logout_count = parse_list(value, config->logout_order, CONFIG_MAX_ENTRIES);
             LOG_DEBUG("Config: logout_order = %d entries", config->logout_count);
+        } else if (strcmp(key, "menu_launcher_order") == 0) {
+            config->menu_launcher_count = parse_list(value, config->menu_launcher_order, CONFIG_MAX_ENTRIES);
+            LOG_DEBUG("Config: menu_launcher_order = %d entries", config->menu_launcher_count);
         } else if (strcmp(key, "lock_before_suspend") == 0) {
             if (parse_bool(value, &config->lock_before_suspend) == 0) {
                 LOG_DEBUG("Config: lock_before_suspend = %s", config->lock_before_suspend ? "true" : "false");
@@ -134,6 +138,11 @@ void config_free(PowerConfig *config) {
         free(config->logout_order[i]);
     }
     config->logout_count = 0;
+
+    for (int i = 0; i < config->menu_launcher_count; i++) {
+        free(config->menu_launcher_order[i]);
+    }
+    config->menu_launcher_count = 0;
 
     free(config->default_cmd);
     config->default_cmd = NULL;

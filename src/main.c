@@ -17,6 +17,7 @@ static void print_usage(const char *progname) {
     printf("  reboot    - Reboot the system\n");
     printf("  lock      - Lock the screen\n");
     printf("  logout    - Log out of the current session\n");
+    printf("  menu      - Show an interactive power menu\n");
     printf("  help      - Show this help message\n");
     printf("\nShortcuts:\n");
     printf("  sp, sleep    - Same as suspend\n");

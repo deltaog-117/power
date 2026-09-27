@@ -7,6 +7,7 @@ extern "C" {
 
 #include "../model/status.h"
 #include "../model/config.h"
+#include <stddef.h>
 
 /**
  * @brief Set the global configuration for the repository.
@@ -76,6 +77,29 @@ PowerStatus system_lock(void);
  *         or other error code on failure.
  */
 PowerStatus system_logout(void);
+
+/**
+ * @brief Pipe a list of options to an interactive launcher and capture the
+ *        option the user picked.
+ *
+ * Tries the config-specified `menu_launcher_order` first, falling back to
+ * rofi, wofi, bemenu, fuzzel, then dmenu (in that order), so a menu keeps
+ * working across distros and launchers without any configuration. Each
+ * candidate is checked for availability with `command -v` before it is
+ * actually launched.
+ *
+ * @param options Array of option strings to display, one per line.
+ * @param count Number of entries in @p options.
+ * @param selection Buffer to receive the chosen option. Set to an empty
+ *        string if the user closed the launcher without picking anything.
+ * @param selection_size Size of @p selection in bytes.
+ * @return POWER_STATUS_OK if a launcher ran (@p selection may still be
+ *         empty on cancel), POWER_STATUS_ERR_NO_LAUNCHER if none of the
+ *         configured/default launchers are installed, or
+ *         POWER_STATUS_ERR_NULL_POINTER on invalid arguments.
+ */
+PowerStatus system_repo_run_launcher(const char *const options[], int count,
+                                      char *selection, size_t selection_size);
 
 #ifdef __cplusplus
 }

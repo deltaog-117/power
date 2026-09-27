@@ -79,6 +79,7 @@ power poweroff  # Power off the system
 power reboot    # Reboot the system
 power lock      # Lock the screen
 power logout    # Log out of the current session
+power menu      # Show an interactive power menu (pick an action with rofi/dmenu/etc.)
 power help      # Show usage
 power --version # Show version information
 power -v        # Show version information (short)
@@ -148,9 +149,31 @@ lock_before_suspend = true
 
 # Lock the screen before hibernating (default: true)
 lock_before_hibernate = true
+
+# Custom `power menu` launcher order (comma-separated)
+menu_launcher_order = rofi -dmenu -p power, wofi --dmenu --prompt power, dmenu -p power
 ```
 
 If a config file is not found, `power` uses its built‑in defaults.
+
+#### Interactive menu
+
+`power menu` shows the six core actions (`Lock`, `Suspend`, `Hibernate`,
+`Poweroff`, `Reboot`, `Logout`) through whichever launcher is available,
+trying `rofi`, `wofi`, `bemenu`, `fuzzel`, then `dmenu` in that order (each
+is checked with `command -v` before being launched, so a distro that only
+has one of them still works out of the box). Bind it in your window manager,
+e.g. for a Super+Ctrl activation:
+
+```
+# i3/sway config
+bindsym $mod+Control+p exec power menu
+```
+
+Since `power menu` pipes its options to the launcher's stdin and reads the
+pick back from stdout — the same "dmenu protocol" every one of those tools
+already speaks — pointing `menu_launcher_order` at a custom launcher you
+write yourself works too, as long as it follows that same convention.
 
 #### Lock before sleep
 

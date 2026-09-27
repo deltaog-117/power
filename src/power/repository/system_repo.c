@@ -181,6 +181,100 @@ PowerStatus system_lock(void) {
     return POWER_STATUS_ERR_NO_LOCKER;
 }
 
+static int program_available(const char *launcher_cmd) {
+    char prog[128];
+    size_t i = 0;
+
+    while (launcher_cmd[i] != '\0' && launcher_cmd[i] != ' ' && i < sizeof(prog) - 1) {
+        prog[i] = launcher_cmd[i];
+        i++;
+    }
+    prog[i] = '\0';
+
+    if (prog[0] == '\0') {
+        return 0;
+    }
+
+    char check[160];
+    snprintf(check, sizeof(check), "command -v %s >/dev/null 2>&1", prog);
+    return system(check) == 0;
+}
+
+PowerStatus system_repo_run_launcher(const char *const options[], int count,
+                                      char *selection, size_t selection_size) {
+    if (options == NULL || selection == NULL || selection_size == 0) {
+        return POWER_STATUS_ERR_NULL_POINTER;
+    }
+    selection[0] = '\0';
+
+    /* Default launcher order: covers dwm/i3/sway-style setups (dmenu),
+     * general X11/Wayland rofi/wofi users, and the lighter bemenu/fuzzel. */
+    const char *default_launchers[] = {
+        "rofi -dmenu -p power",
+        "wofi --dmenu --prompt power",
+        "bemenu -p power",
+        "fuzzel --dmenu --prompt=power>",
+        "dmenu -p power",
+        NULL
+    };
+
+    const char **launchers = NULL;
+    int launcher_count = 0;
+
+    if (g_config && g_config->menu_launcher_count > 0) {
+        launchers = (const char **)g_config->menu_launcher_order;
+        launcher_count = g_config->menu_launcher_count;
+        LOG_DEBUG("Using config-specified menu launcher order (%d entries)", launcher_count);
+    } else {
+        launchers = default_launchers;
+        while (default_launchers[launcher_count] != NULL) launcher_count++;
+        LOG_DEBUG("Using default menu launcher order (%d entries)", launcher_count);
+    }
+
+    for (int i = 0; i < launcher_count; i++) {
+        if (!program_available(launchers[i])) {
+            LOG_DEBUG("Menu launcher not found: %s", launchers[i]);
+            continue;
+        }
+
+        /* Build: printf '%s\n' 'opt1' 'opt2' ... | <launcher> */
+        char items[1024] = "printf '%s\\n'";
+        size_t len = strlen(items);
+        for (int j = 0; j < count; j++) {
+            int written = snprintf(items + len, sizeof(items) - len, " '%s'", options[j]);
+            if (written < 0 || (size_t)written >= sizeof(items) - len) {
+                LOG_ERROR("Menu option list too long for launcher pipeline");
+                return POWER_STATUS_ERR_UNKNOWN;
+            }
+            len += (size_t)written;
+        }
+
+        char full_cmd[1536];
+        snprintf(full_cmd, sizeof(full_cmd), "%s | %s", items, launchers[i]);
+
+        LOG_DEBUG("Running menu launcher: %s", launchers[i]);
+        FILE *fp = popen(full_cmd, "r");
+        if (!fp) {
+            LOG_WARN("Failed to launch %s: %s", launchers[i], strerror(errno));
+            continue;
+        }
+
+        if (fgets(selection, selection_size, fp) != NULL) {
+            size_t sel_len = strlen(selection);
+            while (sel_len > 0 && (selection[sel_len - 1] == '\n' || selection[sel_len - 1] == '\r')) {
+                selection[--sel_len] = '\0';
+            }
+        }
+
+        pclose(fp);
+        return POWER_STATUS_OK;
+    }
+
+    LOG_ERROR("No menu launcher found.");
+    LOG_ERROR("Suggestion: install rofi, wofi, bemenu, fuzzel, or dmenu, or set menu_launcher_order in power.conf.");
+    return POWER_STATUS_ERR_NO_LAUNCHER;
+}
+
 PowerStatus system_logout(void) {
     /* Default logout order */
     const char *default_logout[] = {

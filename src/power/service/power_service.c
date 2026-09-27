@@ -15,6 +15,7 @@ static void print_usage(const char *progname) {
     printf("  reboot    - Reboot the system\n");
     printf("  lock      - Lock the screen\n");
     printf("  logout    - Log out of the current session\n");
+    printf("  menu      - Show an interactive power menu\n");
     printf("  help      - Show this help message\n");
     printf("\nShortcuts:\n");
     printf("  sp, sleep    - Same as suspend\n");
@@ -22,6 +23,41 @@ static void print_usage(const char *progname) {
     printf("  off, shutdown, sd - Same as poweroff\n");
     printf("  restart, rb  - Same as reboot\n");
     printf("  out, exit, log - Same as logout\n");
+}
+
+/* Menu labels shown to the user, paired with the command name each one
+ * dispatches to (reusing power_service_execute so behaviour, including
+ * lock-before-sleep and logging, stays identical to running it directly). */
+static const char *const menu_labels[] = {
+    "Lock", "Suspend", "Hibernate", "Poweroff", "Reboot", "Logout"
+};
+static const char *const menu_commands[] = {
+    "lock", "suspend", "hibernate", "poweroff", "reboot", "logout"
+};
+static const size_t menu_count = sizeof(menu_labels) / sizeof(menu_labels[0]);
+
+static PowerStatus run_menu(void) {
+    char selection[64];
+    PowerStatus status = system_repo_run_launcher(menu_labels, (int)menu_count,
+                                                   selection, sizeof(selection));
+    if (status != POWER_STATUS_OK) {
+        return status;
+    }
+
+    if (selection[0] == '\0') {
+        LOG_INFO("Menu cancelled; no action taken");
+        return POWER_STATUS_OK;
+    }
+
+    for (size_t i = 0; i < menu_count; i++) {
+        if (strcmp(selection, menu_labels[i]) == 0) {
+            LOG_INFO("Menu selection: %s", menu_labels[i]);
+            return power_service_execute(menu_commands[i]);
+        }
+    }
+
+    LOG_ERROR("Unrecognised menu selection: %s", selection);
+    return POWER_STATUS_ERR_INVALID_COMMAND;
 }
 
 PowerStatus power_service_execute(const char *cmd) {
@@ -58,6 +94,9 @@ PowerStatus power_service_execute(const char *cmd) {
 
         case CMD_LOGOUT:
             return system_logout();
+
+        case CMD_MENU:
+            return run_menu();
 
         case CMD_HELP:
             print_usage("power");

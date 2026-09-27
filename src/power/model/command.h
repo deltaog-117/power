@@ -17,6 +17,7 @@ typedef enum {
     CMD_REBOOT,    /**< Reboot the system */
     CMD_LOCK,      /**< Lock the screen */
     CMD_LOGOUT,    /**< Log out of current session */
+    CMD_MENU,      /**< Show an interactive power menu */
     CMD_HELP,      /**< Show help/usage */
     CMD_UNKNOWN    /**< Parse failure / unrecognised command */
 } Command;

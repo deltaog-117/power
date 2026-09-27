@@ -16,6 +16,7 @@
 | 2026-09-06 | Error Handling | Unified PowerStatus enum | ✅ Confirmed |
 | 2026-09-06 | Observability | Structured logging with levels | ✅ Confirmed |
 | 2026-09-06 | Build System | GNU Make with standard targets | ✅ Confirmed |
+| 2026-09-27 | Feature Implementation: Interactive Menu | dmenu-protocol launcher with fallback chain | ✅ Confirmed |
 
 ---
 
@@ -559,3 +560,121 @@ I chose GNU Make because:
 | Date | Update | Author |
 |------|--------|--------|
 | 2026-09-06 | Initial decision | deltaog-117 |
+
+---
+
+### Decision 7: Feature Implementation — Interactive Power Menu
+
+**Date:** 2026-09-27
+**Status:** ✅ Confirmed
+
+---
+
+#### Context / Background
+
+`power` needed a way to trigger a pop-up menu of its six core actions (lock,
+suspend, hibernate, poweroff, reboot, logout) from a window-manager keybind
+(e.g. Super+Ctrl), instead of always invoking a specific subcommand. The
+constraints:
+
+- Must stay a pure CLI tool — no GUI toolkit dependency, matching the
+  project's minimal, distro-agnostic philosophy.
+- Must work across distros/launchers without hardcoding one specific tool.
+- Must keep working once a custom launcher/bar (planned as a future,
+  separate project) replaces whatever launcher is used today.
+
+---
+
+#### Options Considered
+
+**Option A: dmenu/rofi/wofi as picker backend**
+
+| Aspect | Assessment |
+|--------|------------|
+| **Advantages** | No new toolkit dependency; idiomatic for tiling WMs; minimal code (shell out, read one line back) |
+| **Disadvantages** | Look/feel tied to whichever launcher is installed; needs at least one dmenu-protocol launcher present |
+| **Implementation Difficulty** | Easy |
+| **Fit with Constraints** | Excellent — matches the CLI-first philosophy and needs no GUI dependency |
+
+**Option B: Custom GTK3 popup window**
+
+| Aspect | Assessment |
+|--------|------------|
+| **Advantages** | Full control over look and feel; no external launcher dependency |
+| **Disadvantages** | Pulls in the entire GTK3/Pango/Cairo/GLib stack (13 link-time libs, tens of MB installed); slower startup; new build dependency (`pkg-config gtk+-3.0`) |
+| **Implementation Difficulty** | Medium |
+| **Fit with Constraints** | Poor — contradicts the project's "stay a tiny dependency-free CLI" philosophy |
+
+**Option C: ncurses TUI in a floating terminal**
+
+| Aspect | Assessment |
+|--------|------------|
+| **Advantages** | No GUI toolkit dependency; fits a terminal-first aesthetic |
+| **Disadvantages** | Requires a terminal emulator to be spawned and a floating-window WM rule for it; ncurses cannot draw outside a terminal grid |
+| **Implementation Difficulty** | Medium |
+| **Fit with Constraints** | Workable, but adds a terminal-emulator dependency and WM-side configuration the other options don't need |
+
+---
+
+#### Decision & Rationale
+
+**Chosen Option:** A — dmenu-protocol launcher, with a fallback chain
+
+**Reasoning:**
+
+> I chose the dmenu-protocol approach because it keeps `power` a pure CLI
+> tool with zero new dependencies at build time, and it is the standard
+> pattern already used by every WM-integrated menu on Linux/Wayland.
+>
+> The dmenu protocol itself (read newline-separated options on stdin, print
+> the chosen one on stdout) is implemented identically by dmenu, rofi
+> `-dmenu`, wofi `--dmenu`, bemenu, and fuzzel `--dmenu` — so `power menu`
+> does not depend on any one of them specifically. To stay distro-agnostic
+> to the maximum, `system_repo_run_launcher()` tries a fallback chain
+> (config-specified `menu_launcher_order`, else rofi → wofi → bemenu →
+> fuzzel → dmenu), checking each candidate with `command -v` before
+> attempting to launch it — the same fallback-chain pattern already used
+> for `locker_order`/`logout_order`.
+>
+> This also directly answers the forward-compatibility question that drove
+> the choice: since the planned future custom launcher only needs to
+> implement the same stdin/stdout convention, `power` requires zero code
+> changes when that launcher replaces rofi/dmenu — only a `menu_launcher_order`
+> config update.
+>
+> **Trade-offs accepted:**
+> - The pop-up's look and feel depends on whichever launcher is configured/available.
+> - At least one dmenu-protocol launcher must be installed, or the user must configure their own.
+
+---
+
+#### Implementation Notes
+
+> - New `CMD_MENU` value in `command.h`/`command.c`, mapped to the `menu` subcommand.
+> - `system_repo_run_launcher()` (repository layer) owns only the "pipe options to
+>   an external launcher, read back the pick" primitive — it does not know what
+>   the options mean.
+> - `run_menu()` (service layer, `power_service.c`) owns the six menu labels and
+>   their mapping back to command names, then re-enters `power_service_execute()`
+>   so lock-before-sleep, logging, and error handling stay identical to running
+>   the action directly from the CLI.
+> - New `menu_launcher_order` key in `power.conf`, parsed/freed with the same
+>   `parse_list()` helper already used for `locker_order`/`logout_order`.
+> - New `POWER_STATUS_ERR_NO_LAUNCHER` status for when no launcher is available.
+> - A closed/cancelled menu (no stdout from the launcher) is not an error —
+>   `run_menu()` logs it and returns `POWER_STATUS_OK` with no action taken.
+
+---
+
+#### References
+
+- [dmenu(1) — the protocol every option here implements](https://tools.suckless.org/dmenu/)
+- [rofi -dmenu mode](https://github.com/davatorium/rofi)
+
+---
+
+#### Review / Update Log
+
+| Date | Update | Author |
+|------|--------|--------|
+| 2026-09-27 | Initial decision | deltaog-117 |

@@ -21,6 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   falling back to writing `disk` to `/sys/power/state`. Locks the screen first by
   default, refusing to hibernate if the lock fails; controlled independently via
   `lock_before_hibernate` in `power.conf` (default: `true`)
+- **`menu` command** – shows an interactive pop-up of the six core actions (lock,
+  suspend, hibernate, poweroff, reboot, logout) via any dmenu-protocol launcher
+  (rofi, wofi, bemenu, fuzzel, dmenu, tried in that order and detected with
+  `command -v`), so it works out of the box on most distros/WMs. Configurable via
+  `menu_launcher_order` in `power.conf`. Intended for a window-manager keybind
+  (e.g. Super+Ctrl)
+- `POWER_STATUS_ERR_NO_LAUNCHER` status for when no menu launcher is available
 
 ### Changed
 - `system_lock()` and `system_logout()` now use config-specified order when available

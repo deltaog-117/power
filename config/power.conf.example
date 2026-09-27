@@ -10,6 +10,13 @@
 # Customise logout priority order (comma-separated)
 # logout_order = i3-msg exit, bspc quit, gnome-session-quit --logout --no-prompt
 
+# Customise the `power menu` launcher priority order (comma-separated).
+# Each entry is a full command; the menu options are piped to its stdin and
+# the chosen one is read back from its stdout (the dmenu protocol). Point
+# this at your own launcher once you build one, as long as it follows that
+# same convention.
+# menu_launcher_order = rofi -dmenu -p power, wofi --dmenu --prompt power, dmenu -p power
+
 # Lock the screen before suspending (default: true).
 # If the lock fails, suspend is refused rather than leaving the session unlocked.
 # lock_before_suspend = true

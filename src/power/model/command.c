@@ -27,6 +27,7 @@ static const CommandEntry command_map[] = {
     {"out",       CMD_LOGOUT},
     {"log",       CMD_LOGOUT},
     {"exit",      CMD_LOGOUT},
+    {"menu",      CMD_MENU},
     {"help",      CMD_HELP},
     {"-h",        CMD_HELP},
     {"--help",    CMD_HELP}
@@ -54,6 +55,7 @@ const char *command_name(Command cmd) {
         case CMD_REBOOT:    return "reboot";
         case CMD_LOCK:      return "lock";
         case CMD_LOGOUT:    return "logout";
+        case CMD_MENU:      return "menu";
         case CMD_HELP:      return "help";
         default:            return "unknown";
     }

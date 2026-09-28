@@ -210,6 +210,33 @@ font with `menu_font` (a fontconfig pattern) in `power.conf`. In this build
 session, no X display), `power` falls back to them. A plain `make` builds
 without it and needs no extra libraries.
 
+##### Built-in Wayland menu (optional)
+
+The same menu also runs natively on Wayland compositors that support
+`wlr-layer-shell` (Hyprland, sway, river, labwc, Wayfire, niri and other
+wlroots-style compositors):
+
+```bash
+sudo pacman -S wayland wayland-protocols libxkbcommon cairo pango   # or -dev packages
+make MENU=wayland    # Wayland only
+make MENU=both       # X11 and Wayland; the session picks one at run time
+```
+
+The menu is drawn on a transparent full-screen overlay with the menu centred on
+the output the compositor picks (normally the focused one), so a click outside it
+cancels, like on X11. It takes exclusive keyboard focus while open and cancels if
+the compositor takes that focus away. Keys and mouse behave exactly as in the X11
+menu, plus the scroll wheel.
+
+Colours come from `menu_bg`, `menu_fg`, `menu_sel_bg`, `menu_sel_fg` and
+`menu_border` in `power.conf` as `#rgb` or `#rrggbb` (Wayland has no X resources
+and no colour names); an invalid value falls back to the default with a warning.
+`menu_font` accepts a fontconfig-style value (`monospace:size=12`, with optional
+`bold` and `italic`) or a Pango description (`Monospace 12`). Known limits: the
+menu is drawn at scale 1, so it is slightly soft on scaled (HiDPI) outputs, and
+compositors without layer-shell (GNOME/Mutter) fall back to the external
+launchers.
+
 #### Lock before sleep
 
 By default, `power suspend` (`sp`/`sleep`) and `power hibernate` (`hb`) lock the screen

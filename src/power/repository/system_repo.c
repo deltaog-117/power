@@ -2,8 +2,11 @@
 #include "../model/status.h"
 #include "../model/config.h"
 #include "../../shared/logging/logger.h"
-#ifdef POWER_BUILTIN_MENU
+#ifdef POWER_MENU_X11
 #include "menu_x11.h"
+#endif
+#ifdef POWER_MENU_WAYLAND
+#include "menu_wayland.h"
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -208,6 +211,25 @@ static int program_available(const char *launcher_cmd) {
     return system(check) == 0;
 }
 
+#ifdef POWER_BUILTIN_MENU
+/* Each compiled-in backend declines (ERR_NO_LAUNCHER) when the session is not
+ * its kind, so trying Wayland first and X11 second picks the right one. */
+static PowerStatus run_builtin_menu(const char *const options[], int count,
+                                    char *selection, size_t selection_size) {
+    PowerStatus status = POWER_STATUS_ERR_NO_LAUNCHER;
+#ifdef POWER_MENU_WAYLAND
+    status = menu_wayland_run(options, count, g_config, selection, selection_size);
+    if (status != POWER_STATUS_ERR_NO_LAUNCHER) {
+        return status;
+    }
+#endif
+#ifdef POWER_MENU_X11
+    status = menu_x11_run(options, count, g_config, selection, selection_size);
+#endif
+    return status;
+}
+#endif
+
 PowerStatus system_repo_run_launcher(const char *const options[], int count,
                                       char *selection, size_t selection_size) {
     if (options == NULL || selection == NULL || selection_size == 0) {
@@ -248,7 +270,7 @@ PowerStatus system_repo_run_launcher(const char *const options[], int count,
         if (strcmp(launchers[i], "builtin") == 0) {
 #ifdef POWER_BUILTIN_MENU
             PowerStatus builtin_status =
-                menu_x11_run(options, count, g_config, selection, selection_size);
+                run_builtin_menu(options, count, selection, selection_size);
             if (builtin_status == POWER_STATUS_OK) {
                 return POWER_STATUS_OK;
             }

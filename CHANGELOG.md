@@ -42,12 +42,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in `power.conf` (default: `true`)
 - `src/power/model/menu_confirm.c` – destructive-action check and confirm-row
   label, with unit and property tests in `tests/unit/power/test_menu_confirm.c`
+- **Built-in Wayland menu** (optional, `make MENU=wayland` or `MENU=both`) – `power menu`
+  draws the same menu natively on compositors that support `wlr-layer-shell`, using
+  `wayland-client`, `wl_shm`, Cairo + Pango and xkbcommon. The menu sits on a
+  transparent full-screen overlay with exclusive keyboard focus, so a click outside
+  it cancels; keys, mouse and scroll wheel match the X11 menu. Colours are `#rgb` or
+  `#rrggbb` in `power.conf`; `menu_font` takes fontconfig-style or Pango values. The
+  `builtin` launcher entry selects it, and it declines cleanly (falling back to the
+  external launchers) when there is no Wayland display or no layer-shell. The
+  layer-shell protocol XML is vendored in `protocols/`
+- `src/power/model/menu_style.c` – pure colour parsing and font translation, with
+  unit and property tests in `tests/unit/power/test_menu_style.c`
 - `src/power/model/menu_nav.c` – pure navigation helpers, with unit and property
   tests in `tests/unit/power/test_menu_nav.c`
 
 ### Changed
 - Makefile builds each `MENU` variant in its own `build/<variant>/` directory, so
   switching between the default and `MENU=builtin` never reuses mismatched objects
+- `MENU` now accepts `launcher` (default), `builtin` (X11), `wayland` and `both`;
+  Wayland glue code is generated with `wayland-scanner` into `build/<variant>/protocols/`
 
 ### Changed
 - `system_lock()` and `system_logout()` now use config-specified order when available

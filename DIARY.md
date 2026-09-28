@@ -19,6 +19,7 @@
 | 2026-09-27 | Feature Implementation: Interactive Menu | dmenu-protocol launcher with fallback chain | ✅ Confirmed |
 | 2026-09-28 | Built-in Menu | Optional Xlib + Xft window behind `MENU=builtin` | ✅ Confirmed |
 | 2026-09-28 | Menu Confirmation | Second launcher pass for destructive actions | ✅ Confirmed |
+| 2026-09-28 | Wayland Built-in Menu | Raw wayland-client + wlr-layer-shell + Cairo/Pango | ✅ Confirmed |
 
 ---
 
@@ -790,3 +791,60 @@ A stray pick in `power menu` could power off, reboot or log out in one step. Rec
 | Date | Update | Author |
 |------|--------|--------|
 | 2026-09-28 | Initial decision | deltaog-117 |
+
+---
+
+### Decision: Built-in Wayland Menu Backend
+
+**Date:** 2026-09-28  
+**Status:** Confirmed
+
+---
+
+#### Context
+
+The built-in menu only drew on X11; under a Wayland session `power menu` always fell back to an external launcher. The roadmap asked for a native Wayland backend behind the same interface as the X11 one.
+
+---
+
+#### Options Considered
+
+**Option A: Raw `wayland-client` + `wl_shm` + wlr-layer-shell + `xkbcommon`, text via Cairo and Pango.** Mirrors the X11 backend, small dependency set, no toolkit.
+**Option B: Same protocol code, glyphs drawn with FreeType and Fontconfig instead of Pango.** Fewer libraries, but hand-rolled text layout and worse font fallback.
+**Option C: Spawn an existing layer-shell launcher with themed arguments.** Very small, but not a built-in menu and only repeats the launcher fallback.
+
+---
+
+#### Decision
+
+**Chosen:** Option A.
+
+**Reasoning:**
+
+> - The X11 backend already isolates the pure parts (`menu_nav`), so only drawing, input and surface handling are new code.
+> - Cairo and Pango are installed on any system that has a Wayland desktop, and Pango removes the need for hand-written text layout.
+> - `menu_style.c` holds the parts that can be tested without a display (colour parsing, translating the documented Xft-style `menu_font` into a Pango description) with unit and property tests.
+> - The surface is a transparent full-screen overlay with the menu drawn in its centre, so a click outside the menu can cancel it like on X11 and the compositor decides the output.
+
+**Trade-offs accepted:**
+- About 1,000 lines of new C, plus a vendored protocol XML (`protocols/wlr-layer-shell-unstable-v1.xml`).
+- No key repeat, no cursor image, and no output scale handling (soft on HiDPI outputs).
+- Compositors without layer-shell (GNOME/Mutter) still use the external launchers.
+
+---
+
+#### Implementation Notes
+
+> - `make MENU=wayland` builds Wayland only and `MENU=both` builds X11 and Wayland; the default and `MENU=builtin` builds are unchanged. Protocol glue is generated with `wayland-scanner` into `build/<variant>/protocols/`; xdg-shell comes from the `wayland-protocols` package because layer-shell's popup request refers to it.
+> - The `builtin` launcher entry tries Wayland first and X11 second; each backend declines with `POWER_STATUS_ERR_NO_LAUNCHER` when the session is not its kind, so the right one runs.
+> - Protocol versions are bound at 1 for every interface, so the menu works on the oldest compositors.
+> - Verification: there is no real compositor here (headless Hyprland would not start in this environment), so the backend was driven against a small throwaway fake compositor (wl_compositor, wl_shm, wl_seat and layer-shell, not kept in the repository). It confirmed the configure and draw handshake, keyboard navigation (arrows, `j`/`k`, Tab, Home/End, digits, Ctrl+N/P/C, Esc, Enter), mouse hover, click, click-outside and scroll, focus loss cancelling, the no-layer-shell fallback, invalid colours and fonts, and the pixels drawn (checked visually). Repeated runs under UBSan showed no errors. Not yet tried in a real compositor: cursor appearance, HiDPI, and exclusive-focus behaviour.
+
+---
+
+#### Review / Update Log
+
+| Date | Update | Author |
+|------|--------|--------|
+| 2026-09-28 | Initial decision | deltaog-117 |
+

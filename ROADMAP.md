@@ -30,6 +30,7 @@ Items are organized by priority, not by timeline.
 - ✅ **Interactive power menu** – `power menu` pops up the six core actions via any dmenu-protocol launcher (rofi, wofi, bemenu, fuzzel, dmenu, with distro-agnostic fallback and detection), configurable via `menu_launcher_order`; meant for a WM keybind (e.g. Super+Ctrl)
 - ✅ **Built-in X11 menu** – optional `make MENU=builtin` build draws its own themed menu (Xlib + Xft), reading colours from `power.conf` or X resources, with the launcher menu as fallback
 - ✅ **Menu confirmation** – `power menu` asks for a second `Enter` (`Confirm <action>` / `Cancel`) before Poweroff, Reboot and Logout; Lock, Suspend and Hibernate stay one step; disable with `menu_confirm = false`
+- ✅ **Built-in Wayland menu** – `make MENU=wayland` (or `MENU=both`) draws the same menu natively on wlr-layer-shell compositors (wayland-client, wl_shm, Cairo + Pango, xkbcommon), with colours as `#rgb`/`#rrggbb` and the font from `power.conf`; the external-launcher menu stays the fallback
 
 ---
 
@@ -49,7 +50,6 @@ Items are organized by priority, not by timeline.
 
 - **Hybrid‑sleep support** – Add `hybrid-sleep` command (suspend to both RAM and disk).
 - **Desktop notifications** – Use `notify-send` to inform the user when a power action is about to happen or has completed (e.g., "System suspended").
-- **Wayland backend for the built-in menu** – Native `wl_shm` + layer-shell drawing behind the same interface as the X11 backend; today Wayland sessions fall back to external launchers.
 - **Coloured output** – Use ANSI colours to distinguish success (green), warnings (yellow), and errors (red) in the terminal.
 - **Bash/Zsh completion** – Provide completion scripts for `power` commands and their aliases.
 

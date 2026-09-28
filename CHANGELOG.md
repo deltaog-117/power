@@ -35,6 +35,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `menu_border` in `power.conf`, then X resources, then defaults; font via `menu_font`.
   The `builtin` entry in `menu_launcher_order` selects it; the default build is
   unchanged and gains no dependencies
+- **Menu confirmation** – `power menu` reopens the launcher with `Confirm <action>`
+  and `Cancel` before Poweroff, Reboot and Logout, so a stray pick cannot end the
+  session; `Enter` accepts and anything else cancels. Lock, Suspend and Hibernate
+  stay one step, and direct commands are unaffected. Controlled by `menu_confirm`
+  in `power.conf` (default: `true`)
+- `src/power/model/menu_confirm.c` – destructive-action check and confirm-row
+  label, with unit and property tests in `tests/unit/power/test_menu_confirm.c`
 - `src/power/model/menu_nav.c` – pure navigation helpers, with unit and property
   tests in `tests/unit/power/test_menu_nav.c`
 

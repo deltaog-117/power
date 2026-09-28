@@ -18,6 +18,7 @@
 | 2026-09-06 | Build System | GNU Make with standard targets | ✅ Confirmed |
 | 2026-09-27 | Feature Implementation: Interactive Menu | dmenu-protocol launcher with fallback chain | ✅ Confirmed |
 | 2026-09-28 | Built-in Menu | Optional Xlib + Xft window behind `MENU=builtin` | ✅ Confirmed |
+| 2026-09-28 | Menu Confirmation | Second launcher pass for destructive actions | ✅ Confirmed |
 
 ---
 
@@ -728,6 +729,59 @@ I first asked for options that also covered Wayland, then chose A after seeing t
 > - Number keys only move the highlight and Enter is the sole confirmation, so a stray key cannot poweroff the machine.
 > - The Makefile builds each variant in `build/<variant>/` and copies the result to `bin/power`.
 > - Not run against a live display in this session; verified by building both variants warning-free and by the `menu_nav` tests.
+
+---
+
+#### Review / Update Log
+
+| Date | Update | Author |
+|------|--------|--------|
+| 2026-09-28 | Initial decision | deltaog-117 |
+
+---
+
+### Decision: Menu Confirmation for Destructive Actions
+
+**Date:** 2026-09-28  
+**Status:** Confirmed
+
+---
+
+#### Context
+
+A stray pick in `power menu` could power off, reboot or log out in one step. Recoverable actions (lock, suspend, hibernate) do not carry that risk.
+
+---
+
+#### Options Considered
+
+**Option A: Second launcher pass.** Reopen the same launcher with `Confirm <action>` and `Cancel`. Works with every launcher and is one code path.
+**Option B: In-window confirm in the built-in menu.** Best feel, but only covers the built-in menu.
+**Option C: Both.** Best experience, two code paths to maintain.
+
+---
+
+#### Decision
+
+**Chosen:** Option A.
+
+**Reasoning:**
+
+> - Every launcher speaks the same dmenu protocol, so one implementation covers the built-in menu, rofi, wofi, bemenu, fuzzel and dmenu.
+> - The "is this destructive?" rule and the label builder are pure functions in `model/menu_confirm.c`, so they are unit- and property-tested without a display.
+> - The confirm row is first, so `Enter` accepts it, as requested; `Esc`, `Cancel` or a closed launcher all cancel.
+
+**Trade-offs accepted:**
+- A second window appears for destructive actions.
+- Option B can still be layered on later for the built-in menu, turning this into Option C.
+
+---
+
+#### Implementation Notes
+
+> - Only `power menu` confirms. Direct commands (`power poweroff`) are unchanged so scripts and keybinds keep working.
+> - `menu_confirm = false` disables it; unset means on.
+> - Verified with a fake launcher and a harmless logout command: confirm runs it, `Cancel`/empty cancel, `menu_confirm = false` skips the second pass, and Lock stays one step. Not exercised in a real menu window.
 
 ---
 

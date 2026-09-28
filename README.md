@@ -152,6 +152,9 @@ lock_before_hibernate = true
 
 # Custom `power menu` launcher order (comma-separated)
 menu_launcher_order = rofi -dmenu -p power, wofi --dmenu --prompt power, dmenu -p power
+
+# Confirm Poweroff, Reboot and Logout in `power menu` (default: true)
+menu_confirm = true
 ```
 
 If a config file is not found, `power` uses its built‑in defaults.
@@ -174,6 +177,15 @@ Since `power menu` pipes its options to the launcher's stdin and reads the
 pick back from stdout — the same "dmenu protocol" every one of those tools
 already speaks — pointing `menu_launcher_order` at a custom launcher you
 write yourself works too, as long as it follows that same convention.
+
+##### Confirming destructive actions
+
+Picking `Poweroff`, `Reboot` or `Logout` in `power menu` reopens the same launcher
+with two rows, `Confirm <action>` and `Cancel`. The confirmation row is first, so a
+plain `Enter` accepts it; `Cancel`, `Esc` or closing the launcher does nothing.
+`Lock`, `Suspend` and `Hibernate` are recoverable and never ask. Set
+`menu_confirm = false` in `power.conf` to turn this off. Direct commands such as
+`power poweroff` are unaffected, so scripts and keybinds keep working.
 
 ##### Built-in X11 menu (optional)
 

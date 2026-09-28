@@ -29,6 +29,7 @@ Items are organized by priority, not by timeline.
 - ✅ **Hibernate support** – `power hibernate` (`hb`) suspends to disk via `loginctl hibernate`, falling back to `/sys/power/state`; locks the screen first by default (`lock_before_hibernate` in config)
 - ✅ **Interactive power menu** – `power menu` pops up the six core actions via any dmenu-protocol launcher (rofi, wofi, bemenu, fuzzel, dmenu, with distro-agnostic fallback and detection), configurable via `menu_launcher_order`; meant for a WM keybind (e.g. Super+Ctrl)
 - ✅ **Built-in X11 menu** – optional `make MENU=builtin` build draws its own themed menu (Xlib + Xft), reading colours from `power.conf` or X resources, with the launcher menu as fallback
+- ✅ **Menu confirmation** – `power menu` asks for a second `Enter` (`Confirm <action>` / `Cancel`) before Poweroff, Reboot and Logout; Lock, Suspend and Hibernate stay one step; disable with `menu_confirm = false`
 
 ---
 

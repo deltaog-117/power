@@ -27,6 +27,7 @@ typedef struct {
     char *default_cmd;                         /* Default command if none provided */
     int lock_before_suspend;                    /* -1 = unset (default: on), 0 = off, 1 = on */
     int lock_before_hibernate;                  /* -1 = unset (default: on), 0 = off, 1 = on */
+    int menu_confirm;                           /* -1 = unset (default: on), 0 = off, 1 = on */
 } PowerConfig;
 
 /**
@@ -34,7 +35,7 @@ typedef struct {
  *
  * Recognised keys: default, locker_order, logout_order, menu_launcher_order,
  * menu_font, menu_bg, menu_fg, menu_sel_bg, menu_sel_fg, menu_border,
- * lock_before_suspend, lock_before_hibernate.
+ * lock_before_suspend, lock_before_hibernate, menu_confirm.
  *
  * @param config Pointer to PowerConfig struct to populate.
  * @return 0 on success, -1 on error (or file not found).

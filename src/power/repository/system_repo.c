@@ -51,6 +51,11 @@ static PowerStatus try_logind_action(const char *action) {
     }
 }
 
+int system_repo_menu_confirm_enabled(void) {
+    /* Unset means on: an unconfigured menu must not power off in one step. */
+    return g_config && g_config->menu_confirm != -1 ? g_config->menu_confirm : 1;
+}
+
 static int should_lock(int configured) {
     return configured != -1 ? configured : 1; /* default: lock the screen first */
 }

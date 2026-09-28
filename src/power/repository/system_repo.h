@@ -17,6 +17,13 @@ extern "C" {
 void system_repo_set_config(PowerConfig *config);
 
 /**
+ * @brief Whether `power menu` should confirm destructive actions.
+ *
+ * @return 1 unless `menu_confirm = false` is set in the config.
+ */
+int system_repo_menu_confirm_enabled(void);
+
+/**
  * @brief Suspend the system to RAM.
  *
  * Locks the screen first (unless disabled via `lock_before_suspend = false`

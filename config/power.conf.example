@@ -17,6 +17,12 @@
 # same convention.
 # menu_launcher_order = rofi -dmenu -p power, wofi --dmenu --prompt power, dmenu -p power
 
+# Ask for confirmation before Poweroff, Reboot and Logout in `power menu`
+# (default: true). Picking one reopens the menu with "Confirm <action>" and
+# "Cancel"; Enter accepts. Lock, Suspend and Hibernate never ask, and direct
+# commands such as `power poweroff` are unaffected.
+# menu_confirm = true
+
 # Lock the screen before suspending (default: true).
 # If the lock fails, suspend is refused rather than leaving the session unlocked.
 # lock_before_suspend = true

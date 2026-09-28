@@ -32,6 +32,12 @@ static int parse_bool(const char *value, int *out) {
     return -1;
 }
 
+/* Replace a string setting, so a key repeated in the file does not leak. */
+static void set_string(char **slot, const char *value) {
+    free(*slot);
+    *slot = strdup(value);
+}
+
 static int parse_list(const char *value, char *list[], int max_entries) {
     char *value_copy = strdup(value);
     if (!value_copy) return 0;
@@ -74,6 +80,12 @@ int config_load(PowerConfig *config) {
     config->logout_count = 0;
     config->menu_launcher_count = 0;
     config->default_cmd = NULL;
+    config->menu_font = NULL;
+    config->menu_bg = NULL;
+    config->menu_fg = NULL;
+    config->menu_sel_bg = NULL;
+    config->menu_sel_fg = NULL;
+    config->menu_border = NULL;
     config->lock_before_suspend = -1;
     config->lock_before_hibernate = -1;
 
@@ -107,6 +119,18 @@ int config_load(PowerConfig *config) {
         } else if (strcmp(key, "menu_launcher_order") == 0) {
             config->menu_launcher_count = parse_list(value, config->menu_launcher_order, CONFIG_MAX_ENTRIES);
             LOG_DEBUG("Config: menu_launcher_order = %d entries", config->menu_launcher_count);
+        } else if (strcmp(key, "menu_font") == 0) {
+            set_string(&config->menu_font, value);
+        } else if (strcmp(key, "menu_bg") == 0) {
+            set_string(&config->menu_bg, value);
+        } else if (strcmp(key, "menu_fg") == 0) {
+            set_string(&config->menu_fg, value);
+        } else if (strcmp(key, "menu_sel_bg") == 0) {
+            set_string(&config->menu_sel_bg, value);
+        } else if (strcmp(key, "menu_sel_fg") == 0) {
+            set_string(&config->menu_sel_fg, value);
+        } else if (strcmp(key, "menu_border") == 0) {
+            set_string(&config->menu_border, value);
         } else if (strcmp(key, "lock_before_suspend") == 0) {
             if (parse_bool(value, &config->lock_before_suspend) == 0) {
                 LOG_DEBUG("Config: lock_before_suspend = %s", config->lock_before_suspend ? "true" : "false");
@@ -143,6 +167,19 @@ void config_free(PowerConfig *config) {
         free(config->menu_launcher_order[i]);
     }
     config->menu_launcher_count = 0;
+
+    free(config->menu_font);
+    free(config->menu_bg);
+    free(config->menu_fg);
+    free(config->menu_sel_bg);
+    free(config->menu_sel_fg);
+    free(config->menu_border);
+    config->menu_font = NULL;
+    config->menu_bg = NULL;
+    config->menu_fg = NULL;
+    config->menu_sel_bg = NULL;
+    config->menu_sel_fg = NULL;
+    config->menu_border = NULL;
 
     free(config->default_cmd);
     config->default_cmd = NULL;

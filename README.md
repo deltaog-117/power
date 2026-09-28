@@ -175,6 +175,29 @@ pick back from stdout — the same "dmenu protocol" every one of those tools
 already speaks — pointing `menu_launcher_order` at a custom launcher you
 write yourself works too, as long as it follows that same convention.
 
+##### Built-in X11 menu (optional)
+
+`power` can also draw its own menu, with no external launcher needed:
+
+```bash
+sudo pacman -S libx11 libxft libxinerama   # or your distro's -dev packages
+make MENU=builtin
+```
+
+It is a small borderless window centred on the monitor under the pointer.
+Keys: `Up`/`Down`, `j`/`k`, `Tab`, `Ctrl+P`/`Ctrl+N` move; `1`–`6` jump to a row;
+`Enter` confirms; `Esc`, `q` or `Ctrl+C` cancels. The mouse works too: click a row
+to pick it, click outside to cancel. Number keys only highlight, never confirm, so
+a stray keypress cannot power the machine off.
+
+Colours default to your X resources (`*background`, `*foreground`, `*color4`,
+`*color0`), so it follows your theme (pywal included). Override them with
+`menu_bg`, `menu_fg`, `menu_sel_bg`, `menu_sel_fg`, `menu_border`, and set the
+font with `menu_font` (a fontconfig pattern) in `power.conf`. In this build
+`builtin` is tried before the external launchers; if it cannot run (Wayland
+session, no X display), `power` falls back to them. A plain `make` builds
+without it and needs no extra libraries.
+
 #### Lock before sleep
 
 By default, `power suspend` (`sp`/`sleep`) and `power hibernate` (`hb`) lock the screen

@@ -17,6 +17,7 @@
 | 2026-09-06 | Observability | Structured logging with levels | ✅ Confirmed |
 | 2026-09-06 | Build System | GNU Make with standard targets | ✅ Confirmed |
 | 2026-09-27 | Feature Implementation: Interactive Menu | dmenu-protocol launcher with fallback chain | ✅ Confirmed |
+| 2026-09-28 | Built-in Menu | Optional Xlib + Xft window behind `MENU=builtin` | ✅ Confirmed |
 
 ---
 
@@ -678,3 +679,60 @@ constraints:
 | Date | Update | Author |
 |------|--------|--------|
 | 2026-09-27 | Initial decision | deltaog-117 |
+
+---
+
+### Decision 8: Built-in Menu — Optional X11 Window
+
+**Date:** 2026-09-28
+**Status:** Confirmed
+
+---
+
+#### Context / Background
+
+The launcher-based menu (Decision 7) depends on rofi, dmenu or similar being installed and looks however that tool looks. I wanted `power` to be able to show a good-looking menu on its own, without making the default binary heavier or adding dependencies.
+
+---
+
+#### Options Considered
+
+**Option A: Built-in X11 menu (Xlib + Xft).** Fits X11 setups, needs only libX11/libXft at runtime; X11 only.
+**Option B: Terminal menu.** No dependencies and works on Wayland too, but needs a terminal window and a floating rule.
+**Option C: X11 plus native Wayland backends.** Works everywhere and is the most work; deferred.
+
+I first asked for options that also covered Wayland, then chose A after seeing the trade-offs. Wayland is left as a roadmap item.
+
+---
+
+#### Decision
+
+**Chosen:** Option A, gated behind `make MENU=builtin`, with Xft for fonts.
+
+**Reasoning:**
+
+> - The default build stays at ~40 KB with no new dependencies; the built-in build measured ~50 KB and links libX11, libXft and libXinerama.
+> - Colours come from `power.conf`, then X resources, then defaults, so it follows any theme without configuration.
+> - `builtin` is an entry in `menu_launcher_order`, so it composes with the existing fallback chain instead of adding a second selection mechanism.
+> - Wayland sessions are skipped on purpose (keyboard grabs are unreliable under XWayland) and fall through to external launchers.
+
+**Trade-offs accepted:**
+- X11 only for now.
+- The built-in build needs the X development packages, and Xft pulls in fontconfig and freetype.
+
+---
+
+#### Implementation Notes
+
+> - `repository/menu_x11.c` owns the window, drawing and event loop; `model/menu_nav.c` holds the pure navigation logic so it can be unit-tested without X.
+> - Number keys only move the highlight and Enter is the sole confirmation, so a stray key cannot poweroff the machine.
+> - The Makefile builds each variant in `build/<variant>/` and copies the result to `bin/power`.
+> - Not run against a live display in this session; verified by building both variants warning-free and by the `menu_nav` tests.
+
+---
+
+#### Review / Update Log
+
+| Date | Update | Author |
+|------|--------|--------|
+| 2026-09-28 | Initial decision | deltaog-117 |

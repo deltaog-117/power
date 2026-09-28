@@ -98,3 +98,4 @@ tags
 
 # End of https://www.toptal.com/developers/gitignore/api/c,make,linux,vim,neovim,vscode
 bin/
+build/

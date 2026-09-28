@@ -2,6 +2,9 @@
 #include "../model/status.h"
 #include "../model/config.h"
 #include "../../shared/logging/logger.h"
+#ifdef POWER_BUILTIN_MENU
+#include "menu_x11.h"
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -210,6 +213,9 @@ PowerStatus system_repo_run_launcher(const char *const options[], int count,
     /* Default launcher order: covers dwm/i3/sway-style setups (dmenu),
      * general X11/Wayland rofi/wofi users, and the lighter bemenu/fuzzel. */
     const char *default_launchers[] = {
+#ifdef POWER_BUILTIN_MENU
+        "builtin",
+#endif
         "rofi -dmenu -p power",
         "wofi --dmenu --prompt power",
         "bemenu -p power",
@@ -232,6 +238,22 @@ PowerStatus system_repo_run_launcher(const char *const options[], int count,
     }
 
     for (int i = 0; i < launcher_count; i++) {
+        /* "builtin" names the menu compiled into power itself; it is not a
+         * program, so it skips the PATH check and the popen pipeline. */
+        if (strcmp(launchers[i], "builtin") == 0) {
+#ifdef POWER_BUILTIN_MENU
+            PowerStatus builtin_status =
+                menu_x11_run(options, count, g_config, selection, selection_size);
+            if (builtin_status == POWER_STATUS_OK) {
+                return POWER_STATUS_OK;
+            }
+            LOG_DEBUG("Built-in menu unavailable; trying the next launcher");
+#else
+            LOG_DEBUG("Built-in menu not compiled in (build with MENU=builtin)");
+#endif
+            continue;
+        }
+
         if (!program_available(launchers[i])) {
             LOG_DEBUG("Menu launcher not found: %s", launchers[i]);
             continue;
@@ -271,7 +293,7 @@ PowerStatus system_repo_run_launcher(const char *const options[], int count,
     }
 
     LOG_ERROR("No menu launcher found.");
-    LOG_ERROR("Suggestion: install rofi, wofi, bemenu, fuzzel, or dmenu, or set menu_launcher_order in power.conf.");
+    LOG_ERROR("Suggestion: install rofi, wofi, bemenu, fuzzel, or dmenu, build with MENU=builtin, or set menu_launcher_order in power.conf.");
     return POWER_STATUS_ERR_NO_LAUNCHER;
 }
 

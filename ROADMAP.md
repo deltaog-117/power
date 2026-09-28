@@ -28,6 +28,7 @@ Items are organized by priority, not by timeline.
 - ✅ **Lock before suspend** – `power suspend` locks the screen first by default (`lock_before_suspend` in config), refusing to suspend if locking fails
 - ✅ **Hibernate support** – `power hibernate` (`hb`) suspends to disk via `loginctl hibernate`, falling back to `/sys/power/state`; locks the screen first by default (`lock_before_hibernate` in config)
 - ✅ **Interactive power menu** – `power menu` pops up the six core actions via any dmenu-protocol launcher (rofi, wofi, bemenu, fuzzel, dmenu, with distro-agnostic fallback and detection), configurable via `menu_launcher_order`; meant for a WM keybind (e.g. Super+Ctrl)
+- ✅ **Built-in X11 menu** – optional `make MENU=builtin` build draws its own themed menu (Xlib + Xft), reading colours from `power.conf` or X resources, with the launcher menu as fallback
 
 ---
 
@@ -47,6 +48,7 @@ Items are organized by priority, not by timeline.
 
 - **Hybrid‑sleep support** – Add `hybrid-sleep` command (suspend to both RAM and disk).
 - **Desktop notifications** – Use `notify-send` to inform the user when a power action is about to happen or has completed (e.g., "System suspended").
+- **Wayland backend for the built-in menu** – Native `wl_shm` + layer-shell drawing behind the same interface as the X11 backend; today Wayland sessions fall back to external launchers.
 - **Coloured output** – Use ANSI colours to distinguish success (green), warnings (yellow), and errors (red) in the terminal.
 - **Bash/Zsh completion** – Provide completion scripts for `power` commands and their aliases.
 

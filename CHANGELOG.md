@@ -28,6 +28,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `menu_launcher_order` in `power.conf`. Intended for a window-manager keybind
   (e.g. Super+Ctrl)
 - `POWER_STATUS_ERR_NO_LAUNCHER` status for when no menu launcher is available
+- **Built-in X11 menu** (optional, `make MENU=builtin`) – `power menu` draws its own
+  window with Xlib + Xft, centred on the monitor under the pointer. Keyboard and
+  mouse navigation; number keys only highlight, so a stray key cannot trigger a
+  power action. Colours come from `menu_bg`, `menu_fg`, `menu_sel_bg`, `menu_sel_fg`,
+  `menu_border` in `power.conf`, then X resources, then defaults; font via `menu_font`.
+  The `builtin` entry in `menu_launcher_order` selects it; the default build is
+  unchanged and gains no dependencies
+- `src/power/model/menu_nav.c` – pure navigation helpers, with unit and property
+  tests in `tests/unit/power/test_menu_nav.c`
+
+### Changed
+- Makefile builds each `MENU` variant in its own `build/<variant>/` directory, so
+  switching between the default and `MENU=builtin` never reuses mismatched objects
 
 ### Changed
 - `system_lock()` and `system_logout()` now use config-specified order when available

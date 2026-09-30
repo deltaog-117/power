@@ -20,6 +20,7 @@
 | 2026-09-28 | Built-in Menu | Optional Xlib + Xft window behind `MENU=builtin` | ✅ Confirmed |
 | 2026-09-28 | Menu Confirmation | Second launcher pass for destructive actions | ✅ Confirmed |
 | 2026-09-28 | Wayland Built-in Menu | Raw wayland-client + wlr-layer-shell + Cairo/Pango | ✅ Confirmed |
+| 2026-09-30 | Power Actions on systemd 261 | `systemctl` first, `loginctl` second | ✅ Confirmed |
 
 ---
 
@@ -848,3 +849,45 @@ The built-in menu only drew on X11; under a Wayland session `power menu` always 
 |------|--------|--------|
 | 2026-09-28 | Initial decision | deltaog-117 |
 
+---
+
+### Decision: Power Actions on systemd 261
+
+**Date:** 2026-09-30  
+**Status:** Confirmed
+
+---
+
+#### Context / Background
+
+Suspend, hibernate, poweroff and reboot from the menu only locked the screen. The debug log showed `Unknown command verb 'suspend'`: systemd 261's `loginctl` no longer has the power verbs, which live in `systemctl`. Every action then fell through to writing `/sys/power/state` or calling `reboot()`, both refused for a normal user.
+
+---
+
+#### Decision
+
+> `try_logind_action()` tries `systemctl <verb>` first and `loginctl <verb>` second, then the old fallbacks.
+
+**Reasoning:**
+
+> - `systemctl` has the verbs on every systemd version, and polkit already lets an active local session use them, so no sudo is needed.
+> - elogind systems still ship the verbs in `loginctl`, so keeping it second preserves the non-systemd path.
+
+**Trade-offs accepted:**
+- One extra `command -v` probe per front-end on each action.
+
+---
+
+#### Implementation Notes
+
+> - Found together with a stale-build crash: the Makefile had no header dependencies, and a root-owned `build/launcher` from `sudo make install` left objects compiled against an older `PowerConfig`. `-MMD -MP` now rebuilds dependents when a header changes.
+> - Not fixed in code, by environment: on the author's machine `sleep.target` and `suspend.target` are masked (`CanSuspend` is "no") and hibernate has no disk swap or `resume=` (`CanHibernate` is "na"), so those two still cannot run. Checking `CanSuspend`/`CanHibernate` before locking is a follow-up.
+> - Verification: a clean build has no warnings and `power help` no longer aborts. Real poweroff and reboot were not exercised here.
+
+---
+
+#### Review / Update Log
+
+| Date | Update | Author |
+|------|--------|--------|
+| 2026-09-30 | Initial decision | deltaog-117 |

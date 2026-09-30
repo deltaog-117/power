@@ -24,34 +24,36 @@ void system_repo_set_config(PowerConfig *config) {
     g_config = config;
 }
 
-static int logind_available_cached = -1;
+/* Power verbs live in systemctl on systemd (loginctl dropped them) and in
+ * loginctl on elogind, so try both front-ends to logind in that order. */
+static const char *const logind_frontends[] = { "systemctl", "loginctl" };
 
-static int logind_available(void) {
-    if (logind_available_cached != -1) {
-        return logind_available_cached;
-    }
-    int ret = system("loginctl --version >/dev/null 2>&1");
-    logind_available_cached = (ret == 0);
-    return logind_available_cached;
+static int frontend_available(const char *frontend) {
+    char check[64];
+    snprintf(check, sizeof(check), "command -v %s >/dev/null 2>&1", frontend);
+    return system(check) == 0;
 }
 
 static PowerStatus try_logind_action(const char *action) {
-    if (!logind_available()) {
-        return POWER_STATUS_ERR_SYSTEM;
-    }
+    for (size_t i = 0; i < sizeof(logind_frontends) / sizeof(logind_frontends[0]); i++) {
+        const char *frontend = logind_frontends[i];
+        if (!frontend_available(frontend)) {
+            continue;
+        }
 
-    char cmd[256];
-    snprintf(cmd, sizeof(cmd), "loginctl %s", action);
-    LOG_DEBUG("Trying logind: %s", cmd);
+        char cmd[256];
+        snprintf(cmd, sizeof(cmd), "%s %s", frontend, action);
+        LOG_DEBUG("Trying logind: %s", cmd);
 
-    int ret = system(cmd);
-    if (ret == 0) {
-        LOG_INFO("loginctl %s succeeded", action);
-        return POWER_STATUS_OK;
-    } else {
-        LOG_WARN("loginctl %s failed (ret=%d), falling back", action, ret);
-        return POWER_STATUS_ERR_SYSTEM;
+        int ret = system(cmd);
+        if (ret == 0) {
+            LOG_INFO("%s succeeded", cmd);
+            return POWER_STATUS_OK;
+        }
+        LOG_WARN("%s failed (ret=%d)", cmd, ret);
     }
+    LOG_WARN("No logind front-end could run %s, falling back", action);
+    return POWER_STATUS_ERR_SYSTEM;
 }
 
 int system_repo_menu_confirm_enabled(void) {

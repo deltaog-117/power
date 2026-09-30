@@ -68,6 +68,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `config.c` failed to compile (`PATH_MAX` undeclared) due to a missing `<limits.h>` include
+- `suspend`, `hibernate`, `poweroff` and `reboot` only locked the screen on systemd 261+,
+  where `loginctl` no longer has those verbs. They now run through `systemctl` first and
+  `loginctl` second (elogind), before any `/sys/power/state` fallback
+- Stale objects after a header change (for example `PowerConfig`) could be linked together
+  and crash every run with "stack smashing detected"; the Makefile now tracks header
+  dependencies
 
 ---
 

@@ -27,7 +27,7 @@ Whether you're a minimalist running `dwm`, a GNOME user, or a system administrat
 - 🔹 **Modular architecture** – Feature‑first, vertically sliced design for easy maintenance
 - 🔹 **Small & fast** – Written in C99, minimal dependencies
 - 🔹 **Version flag** – `--version` or `-v` to display build information
-- 🔹 **Systemd/logind integration** – Uses `loginctl` when available, falls back gracefully
+- 🔹 **Systemd/logind integration** – Uses `systemctl` (or `loginctl` on elogind) when available, falls back gracefully
 - 🔹 **User configuration** – Customise locker/logout order and default command via `~/.config/power.conf`
 - 🔹 **Lock before sleep** – Screen locks before suspending or hibernating by default; the action is refused if locking fails
 

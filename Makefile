@@ -48,6 +48,10 @@ OBJECTS = $(SOURCES:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o) $(PROTO_OBJECTS)
 
 INCLUDES = -I$(SRC_DIR)
 
+# Track header dependencies so a changed struct (e.g. PowerConfig) rebuilds
+# every object that includes it instead of linking stale layouts together.
+CFLAGS += -MMD -MP
+
 all: $(TARGET)
 
 $(BUILT_BIN): $(OBJECTS)
@@ -100,5 +104,7 @@ uninstall:
 
 test:
 	@echo "No tests implemented yet"
+
+-include $(OBJECTS:.o=.d)
 
 .PHONY: all clean install uninstall test $(TARGET)
